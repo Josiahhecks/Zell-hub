@@ -1,137 +1,73 @@
---[[
-    🏠 Zell Hub – Ultimate House Tycoon
-    WindUI v1.6+ | 30-Jul-2025
-]]
+--[[  Zell Hub – Ultimate House Tycoon  ]]
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
-----------------------------------------------------------
--- 1)  Load WindUI (latest release)
-----------------------------------------------------------
-local WindUI = loadstring(
-    game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua")
-)()
+-- 1) window & tab
+local Window = WindUI:CreateWindow({ Title = "🔮 Zell Hub", Author = "Zell Hub", Theme = "Dark" })
+local Tab    = Window:Tab({ Title = "Tycoon", Icon = "house" })
 
-----------------------------------------------------------
--- 2)  Optional global tweaks
-----------------------------------------------------------
-WindUI:SetTheme("Dark")
-WindUI:SetNotificationLower(true)
-
-----------------------------------------------------------
--- 3)  Create the main window
-----------------------------------------------------------
-local Window = WindUI:CreateWindow({
-    Title        = "🔮 Zell Hub",
-    Icon         = "door-open",
-    Author       = "Zell Hub",
-    Theme        = "Dark",
-    Transparent  = false,
-    SideBarWidth = 200,
-    ScrollBarEnabled = true
-})
-
-----------------------------------------------------------
--- 4)  Create the “Tycoon” tab
-----------------------------------------------------------
-local Tab = Window:Tab({ Title = "Tycoon", Icon = "house" })
-
-----------------------------------------------------------
--- 5)  Wait for game & player data
-----------------------------------------------------------
+-- 2) wait for game
 repeat task.wait() until game:IsLoaded()
-
 local plr  = game.Players.LocalPlayer
 local char = plr.Character or plr.CharacterAdded:Wait()
 local hrp  = char:WaitForChild("HumanoidRootPart")
 
-local plot = workspace:WaitForChild("Player_Plots_F"):FindFirstChild(tostring(plr.UserId) .. "_Plot")
+local plot = workspace:WaitForChild("Player_Plots_F")[tostring(plr.UserId) .. "_Plot"]
 if not plot then
     WindUI:Popup({
         Title   = "Plot Not Found",
-        Icon    = "x-circle",
-        Content = "Load your plot, then re-execute the script.",
-        Buttons = { { Title = "OK", Variant = "Primary", Callback = function() end } }
+        Content = "Load your plot and re-execute.",
+        Buttons = { { Title = "OK", Callback = function() end } }
     })
     return
 end
 
-local buttonsFolder = plot:WaitForChild("Builds_F"):WaitForChild("Buttons_F")
-local mailbox       = plot:WaitForChild("Mailbox"):WaitForChild("Main_Censor")
+local buttonsFolder = plot.Builds_F.Buttons_F
+local mailbox       = plot.Mailbox.Main_Censor
 
-----------------------------------------------------------
--- 6)  State toggles (both present!)
-----------------------------------------------------------
-local autoPurchase = false
-local autoCollect  = false
+-- 3) toggles
+local autoBuy   = false
+local autoClaim = false
 
-----------------------------------------------------------
--- 7)  Automation loops
-----------------------------------------------------------
+-- 4) loops
 task.spawn(function()
-    while task.wait(1) do
-        if autoPurchase then
+    while task.wait() do
+        if autoBuy then
             for _, b in ipairs(buttonsFolder:GetChildren()) do
-                local tp = b:FindFirstChild("Touch_P")
-                if tp and tp:IsA("BasePart") then
-                    hrp.CFrame = tp.CFrame + Vector3.new(0, 2, 0)
+                local part = b:FindFirstChild("Touch_P")
+                if part then
+                    hrp.CFrame = part.CFrame + Vector3.new(0, 2, 0)
                     task.wait(0.3)
                 end
             end
+        else
+            task.wait(0.5) -- idle
         end
     end
 end)
 
 task.spawn(function()
-    while task.wait(1.5) do
-        if autoCollect then
+    while task.wait() do
+        if autoClaim then
             hrp.CFrame = mailbox.CFrame + Vector3.new(0, 2, 0)
+        else
+            task.wait(0.5) -- idle
         end
     end
 end)
 
-----------------------------------------------------------
--- 8)  UI COMPONENTS
-----------------------------------------------------------
--- Paragraph
-Tab:Paragraph({
-    Title = "Welcome to Zell Hub",
-    Desc  = "Toggle the switches below to enable automation."
-})
-
--- Auto-Purchase toggle
+-- 5) toggles on the UI
 Tab:Toggle({
     Title    = "🏗 Auto Purchase",
-    Desc     = "Auto-buy every button in your plot",
     Icon     = "hammer",
     Type     = "Switch",
     Default  = false,
-    Callback = function(v) autoPurchase = v end
+    Callback = function(v) autoBuy = v end
 })
 
--- Auto-Collect toggle
 Tab:Toggle({
     Title    = "💰 Auto Collect",
-    Desc     = "Auto-claim cash from mailbox",
     Icon     = "mail",
     Type     = "Switch",
     Default  = false,
-    Callback = function(v) autoCollect = v end
+    Callback = function(v) autoClaim = v end
 })
-
--- Just a spacer
-Tab:Section({ Title = "Extra Features", TextXAlignment = "Left" })
-
--- Final button
-Tab:Button({
-    Title = "✅ Script Loaded",
-    Desc  = "Automation is active",
-    Callback = function()
-        WindUI:Popup({
-            Title   = "Zell Hub",
-            Icon    = "check-circle",
-            Content = "Auto-Purchase and Auto-Collect are ready!",
-            Buttons = { { Title = "OK", Variant = "Primary", Callback = function() end } }
-        })
-    end
-})
-
-print("[Zell Hub] Ultimate Tycoon automation is running")
