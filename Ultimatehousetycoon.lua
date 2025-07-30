@@ -1,18 +1,17 @@
 --[[
     🏠 Zell Hub – Ultimate House Tycoon
-    Full WindUI showcase using the *exact* docs examples
-    Docs: https://footagesus.github.io/WindUI-Docs/
+    WindUI v1.6+ | 30-Jul-2025
 ]]
 
 ----------------------------------------------------------
--- 1)  Load WindUI (latest release – official loader)
+-- 1)  Load WindUI (latest release)
 ----------------------------------------------------------
 local WindUI = loadstring(
     game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua")
 )()
 
 ----------------------------------------------------------
--- 2)  Optional global settings (from docs)
+-- 2)  Optional global tweaks
 ----------------------------------------------------------
 WindUI:SetTheme("Dark")
 WindUI:SetNotificationLower(true)
@@ -36,7 +35,7 @@ local Window = WindUI:CreateWindow({
 local Tab = Window:Tab({ Title = "Tycoon", Icon = "house" })
 
 ----------------------------------------------------------
--- 5)  Wait until the game is fully loaded
+-- 5)  Wait for game & player data
 ----------------------------------------------------------
 repeat task.wait() until game:IsLoaded()
 
@@ -50,9 +49,7 @@ if not plot then
         Title   = "Plot Not Found",
         Icon    = "x-circle",
         Content = "Load your plot, then re-execute the script.",
-        Buttons = {
-            { Title = "OK", Variant = "Primary", Callback = function() end }
-        }
+        Buttons = { { Title = "OK", Variant = "Primary", Callback = function() end } }
     })
     return
 end
@@ -61,12 +58,13 @@ local buttonsFolder = plot:WaitForChild("Builds_F"):WaitForChild("Buttons_F")
 local mailbox       = plot:WaitForChild("Mailbox"):WaitForChild("Main_Censor")
 
 ----------------------------------------------------------
--- 6)  State variables for automation
+-- 6)  State toggles (both present!)
 ----------------------------------------------------------
-local autoPurchase, autoCollect = false, false
+local autoPurchase = false
+local autoCollect  = false
 
 ----------------------------------------------------------
--- 7)  Automation loops (already tested)
+-- 7)  Automation loops
 ----------------------------------------------------------
 task.spawn(function()
     while task.wait(1) do
@@ -91,191 +89,49 @@ task.spawn(function()
 end)
 
 ----------------------------------------------------------
--- 8)  UI COMPONENTS – straight from the docs
+-- 8)  UI COMPONENTS
 ----------------------------------------------------------
-
--- Paragraph (with a button)
+-- Paragraph
 Tab:Paragraph({
     Title = "Welcome to Zell Hub",
-    Desc  = "Toggle the switches below to enable automation.",
-    Buttons = {
-        {
-            Icon    = "info",
-            Title   = "About",
-            Callback = function()
-                WindUI:Popup({
-                    Title   = "About Zell Hub",
-                    Icon    = "info",
-                    Content = "Made by the community for Ultimate House Tycoon.",
-                    Buttons = { { Title = "OK", Callback = function() end } }
-                })
-            end
-        }
-    }
+    Desc  = "Toggle the switches below to enable automation."
 })
 
--- Toggle (Checkbox style)
+-- Auto-Purchase toggle
 Tab:Toggle({
-    Title = "🏗 Auto Purchase",
-    Desc  = "Auto-buy every button in your plot",
-    Icon  = "hammer",
-    Type  = "Checkbox",
-    Default = false,
+    Title    = "🏗 Auto Purchase",
+    Desc     = "Auto-buy every button in your plot",
+    Icon     = "hammer",
+    Type     = "Switch",
+    Default  = false,
     Callback = function(v) autoPurchase = v end
 })
 
--- Toggle (Switch style)
+-- Auto-Collect toggle
 Tab:Toggle({
-    Title = "💰 Auto Collect",
-    Desc  = "Auto-claim cash from mailbox",
-    Icon  = "mail",
-    Type  = "Switch",
-    Default = false,
+    Title    = "💰 Auto Collect",
+    Desc     = "Auto-claim cash from mailbox",
+    Icon     = "mail",
+    Type     = "Switch",
+    Default  = false,
     Callback = function(v) autoCollect = v end
 })
 
--- Slider (with float step)
-Tab:Slider({
-    Title = "Purchase Delay",
-    Desc  = "Seconds between each button click",
-    Step  = 0.1,
-    Value = {
-        Min     = 0.1,
-        Max     = 3,
-        Default = 0.3
-    },
-    Callback = function(v)
-        _G.purchaseDelay = v   -- you can use this var in the loop if you want
-    end
-})
-
--- Dropdown (single-select)
-local drop = Tab:Dropdown({
-    Title   = "Theme",
-    Values  = WindUI:GetThemes(), -- ["Dark", "Light", ...]
-    Value   = "Dark",
-    Multi   = false,
-    Callback = function(theme)
-        WindUI:SetTheme(theme)
-    end
-})
-
--- Dropdown (multi-select)
-local multiDrop = Tab:Dropdown({
-    Title     = "Ignored Buttons",
-    Values    = { "Door", "Wall", "Roof", "Floor" },
-    Value     = {},
-    Multi     = true,
-    AllowNone = true,
-    Callback  = function(list)
-        -- store ignored buttons in _G.ignoredButtons = list
-        _G.ignoredButtons = list
-    end
-})
-
--- Input (single-line)
-Tab:Input({
-    Title       = "Webhook URL",
-    Desc        = "Discord webhook for notifications",
-    Placeholder = "https://discord.com/api/webhooks/...",
-    Type        = "Input",
-    Callback    = function(url)
-        _G.webhook = url
-    end
-})
-
--- Input (multi-line / textarea)
-Tab:Input({
-    Title       = "Custom Notes",
-    Desc        = "Write anything here",
-    Placeholder = "Type your notes...",
-    Type        = "Textarea",
-    Callback    = function(txt)
-        _G.notes = txt
-    end
-})
-
--- Colorpicker
-Tab:Colorpicker({
-    Title        = "Accent Color",
-    Desc         = "Choose the UI accent",
-    Default      = Color3.fromRGB(0, 120, 215),
-    Transparency = 0,
-    Callback     = function(col)
-        WindUI:AddTheme({
-            Name        = "Custom",
-            Accent      = col:ToHex(),
-            Dialog      = "#18181b",
-            Outline     = "#FFFFFF",
-            Text        = "#FFFFFF",
-            Placeholder = "#999999",
-            Background  = "#0e0e10",
-            Button      = "#52525b",
-            Icon        = "#a1a1aa"
-        })
-        WindUI:SetTheme("Custom")
-        drop:Refresh(WindUI:GetThemes()) -- refresh theme list
-    end
-})
-
--- Keybind to toggle the UI
-Tab:Keybind({
-    Title   = "Toggle UI",
-    Desc    = "Key to open/close this window",
-    Value   = "G",
-    Callback = function(key)
-        Window:SetToggleKey(Enum.KeyCode[key])
-    end
-})
-
--- Button with lock/unlock demo
-local lockBtn = Tab:Button({
-    Title = "Lock All UI",
-    Desc  = "Prevents accidental changes",
-    Callback = function()
-        lockBtn:Lock()
-        -- lock every interactive element
-        drop:Lock()
-        multiDrop:Lock()
-    end
-})
-
--- Unlock button
-Tab:Button({
-    Title = "Unlock All UI",
-    Desc  = "Re-enable editing",
-    Callback = function()
-        lockBtn:Unlock()
-        drop:Unlock()
-        multiDrop:Unlock()
-    end
-})
-
--- Code viewer
-Tab:Code({
-    Title = "Source Snippet",
-    Code  = [[-- Example
-local speed = 50
-print("Speed is", speed)
-]]
-})
-
--- Section divider
-Tab:Section({ Title = "Danger Zone", TextXAlignment = "Center", TextSize = 18 })
+-- Just a spacer
+Tab:Section({ Title = "Extra Features", TextXAlignment = "Left" })
 
 -- Final button
 Tab:Button({
     Title = "✅ Script Loaded",
-    Desc  = "Everything is running",
+    Desc  = "Automation is active",
     Callback = function()
         WindUI:Popup({
             Title   = "Zell Hub",
             Icon    = "check-circle",
-            Content = "Automation active. Happy building!",
+            Content = "Auto-Purchase and Auto-Collect are ready!",
             Buttons = { { Title = "OK", Variant = "Primary", Callback = function() end } }
         })
     end
 })
 
-----------------------------------------------------------
 print("[Zell Hub] Ultimate Tycoon automation is running")
