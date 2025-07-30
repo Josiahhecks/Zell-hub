@@ -29,7 +29,7 @@ local autoCollect = false
 
 -- Create main UI window
 local Window = WindUI:CreateWindow({
-    Title = "Tycoon Hub",
+    Title = "zell Hub",
     Icon = "rbxassetid://129260712070622",
     IconThemed = true,
     Author = "Automation Script",
