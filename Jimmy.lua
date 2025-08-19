@@ -3,6 +3,7 @@
 -- Uses Rayfield for GUI
 -- Features: Auto Farm gold, Auto Buy items/blocks/chests using remotes
 -- Note: Auto Buy will loop buy the selected item if toggle enabled and gold sufficient
+-- New Feature: Auto Add Slots (1-500)
 
 if game.PlaceId ~= 537413528 then
     return
@@ -13,7 +14,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
     Name = "Josiah Hub",
     LoadingTitle = "Josiah Hub for BABFT",
-    LoadingSubtitle = "Auto Farm & Auto Buy",
+    LoadingSubtitle = "Auto Farm & Auto Buy & Auto Slots",
     ConfigurationSaving = {
         Enabled = false,
     },
@@ -23,6 +24,7 @@ local Window = Rayfield:CreateWindow({
 local MainTab = Window:CreateTab("Main")
 local FarmTab = Window:CreateTab("Auto Farm")
 local BuyTab = Window:CreateTab("Auto Buy")
+local SlotsTab = Window:CreateTab("Auto Slots")
 
 -- Auto Farm from jimmy.txt
 local Silent = false
@@ -248,5 +250,37 @@ MainTab:CreateButton({
     Name = "Rejoin",
     Callback = function()
         game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
+    end,
+})
+
+-- New Feature: Auto Add Slots
+local slotsAmount = 100
+SlotsTab:CreateParagraph({Title = "Warning", Content = "If you make it go over 500 it will start lagging or crashing and fuck up plr data so dont."})
+
+SlotsTab:CreateSlider({
+    Name = "Slots to Add",
+    Range = {1, 500},
+    Increment = 1,
+    CurrentValue = 100,
+    Callback = function(Value)
+        slotsAmount = Value
+    end,
+})
+
+SlotsTab:CreateButton({
+    Name = "Add Slots",
+    Callback = function()
+        for i = 1, slotsAmount do
+            task.spawn(function()
+                local args = {
+                    [1] = 1,
+                    [2] = tostring(i) .. "\0",
+                    [3] = 0,
+                    [4] = ""
+                }
+                workspace:WaitForChild("UpdateSlotOrderRE"):FireServer(unpack(args))
+            end)
+        end
+        Rayfield:Notify({Title = "Adding Slots", Content = "Attempting to add " .. slotsAmount .. " slots"})
     end,
 })
